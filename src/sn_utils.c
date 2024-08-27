@@ -415,100 +415,18 @@ static int process_mgmt(n2n_sn_t *sss,
 {
     char resbuf[N2N_SN_PKTBUF_SIZE];
     size_t ressize = 0;
-    uint32_t num_edges = 0;
-    uint32_t num = 0;
-    struct sn_community *community, *tmp;
-    struct peer_info * peer, *tmpPeer;
-    macstr_t mac_buf;
-    n2n_sock_str_t sockbuf;
 
     traceEvent(TRACE_DEBUG, "process_mgmt");
 
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "----------------\n");
+    // 直接设置要发送的消息
+    ressize = snprintf(resbuf, N2N_SN_PKTBUF_SIZE, "当前不支持，您无权查看！\n");
 
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "uptime    %lu\n", (now - sss->start_time));
-
-    HASH_ITER(hh, sss->communities, community, tmp)
-    {
-        num_edges += HASH_COUNT(community->edges);
-    }
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "edges     %u\n",
-                        num_edges);
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "errors    %u\n",
-                        (unsigned int)sss->stats.errors);
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "reg_sup   %u\n",
-                        (unsigned int)sss->stats.reg_super);
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "reg_nak   %u\n",
-                        (unsigned int)sss->stats.reg_super_nak);
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "fwd       %u\n",
-                        (unsigned int)sss->stats.fwd);
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "broadcast %u\n",
-                        (unsigned int)sss->stats.broadcast);
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "last fwd  %lu sec ago\n",
-                        (long unsigned int)(now - sss->stats.last_fwd));
-
-    ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                        "last reg  %lu sec ago\n",
-                        (long unsigned int)(now - sss->stats.last_reg_super));
-
-    ressize += snprintf(resbuf+ressize, N2N_SN_PKTBUF_SIZE-ressize,
-                        "cur_cmnts %u\n", HASH_COUNT(sss->communities));
-    HASH_ITER(hh, sss->communities, community, tmp) {
-      ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                          "community: %s\n", community->community);
-      sendto_mgmt(sss, sender_sock, (const uint8_t *)resbuf, ressize);
-      ressize = 0;
-
-      num = 0;
-      HASH_ITER(hh, community->edges, peer, tmpPeer) {
-        ressize += snprintf(resbuf + ressize, N2N_SN_PKTBUF_SIZE - ressize,
-                            "\t[id: %u][MAC: %s][edge: %s][last seen: %lu sec ago]\n",
-                            ++num, macaddr_str(mac_buf, peer->mac_addr),
-                            sock_to_cstr(sockbuf, &(peer->sock)), now-peer->last_seen);
-
-        sendto_mgmt(sss, sender_sock, (const uint8_t *)resbuf, ressize);
-        ressize = 0;
-      }
-    }
-
-    ressize += snprintf(resbuf+ressize, N2N_SN_PKTBUF_SIZE-ressize,
-                        "\n");
+    // 发送消息
     sendto_mgmt(sss, sender_sock, (const uint8_t *)resbuf, ressize);
 
     return 0;
 }
 
-static int sendto_mgmt(n2n_sn_t *sss,
-                       const struct sockaddr_in *sender_sock,
-                       const uint8_t *mgmt_buf,
-                       size_t mgmt_size)
-{
-  ssize_t r = sendto(sss->mgmt_sock, mgmt_buf, mgmt_size, 0 /*flags*/,
-                     (struct sockaddr *)sender_sock, sizeof (struct sockaddr_in));
-
-  if (r <= 0) {
-    ++(sss->stats.errors);
-    traceEvent (TRACE_ERROR, "sendto_mgmt : sendto failed. %s", strerror (errno));
-    return -1;
-  }
-  return 0;
-}
 
 /** Examine a datagram and determine what to do with it.
  *
