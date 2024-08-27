@@ -1503,28 +1503,31 @@ static int sort_communities (n2n_sn_t *sss,
     return 0;
 }
 
+
 static int process_mgmt(n2n_sn_t *sss,
                         const struct sockaddr_in *sender_sock,
-                        const uint8_t *mgmt_buf,
+                        char *mgmt_buf,
                         size_t mgmt_size,
-                        time_t now)
-{
+                        time_t now) {
+
     char resbuf[N2N_SN_PKTBUF_SIZE];
     size_t ressize = 0;
 
     traceEvent(TRACE_DEBUG, "process_mgmt");
 
-    // 直接设置要发送的消息
-    ressize = snprintf(resbuf, N2N_SN_PKTBUF_SIZE, 
-                   "Warning: This platform is public, private information will not be shown!\n"
-                   "警告：当前系统平台为公共环境，不再展示隐私信息！\n");
+    /* avoid parsing any uninitialized junk from the stack */
+    mgmt_buf[mgmt_size] = 0;
 
+    /* Directly send the specific message */
+    ressize = snprintf(resbuf, N2N_SN_PKTBUF_SIZE,
+                       "Warning: This platform is public, private information will not be shown.\n"
+                       "警告：当前系统平台为公共环境，不再展示隐私信息！\n");
 
-    // 发送消息
     sendto_mgmt(sss, sender_sock, (const uint8_t *)resbuf, ressize);
 
     return 0;
 }
+
 
 static int sendto_mgmt (n2n_sn_t *sss,
                         const struct sockaddr_in *sender_sock,
