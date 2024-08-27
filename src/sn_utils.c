@@ -419,7 +419,10 @@ static int process_mgmt(n2n_sn_t *sss,
     traceEvent(TRACE_DEBUG, "process_mgmt");
 
     // 直接设置要发送的消息
-    ressize = snprintf(resbuf, N2N_SN_PKTBUF_SIZE, "当前不支持，您无权查看！\n");
+    ressize = snprintf(resbuf, N2N_SN_PKTBUF_SIZE, 
+                   "Warning: This platform is public, private information will not be shown!\n"
+                   "警告：当前系统平台为公共环境，不再展示隐私信息！\n");
+
 
     // 发送消息
     sendto_mgmt(sss, sender_sock, (const uint8_t *)resbuf, ressize);
