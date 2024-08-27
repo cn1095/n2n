@@ -427,6 +427,21 @@ static int process_mgmt(n2n_sn_t *sss,
     return 0;
 }
 
+static int sendto_mgmt(n2n_sn_t *sss,
+                       const struct sockaddr_in *sender_sock,
+                       const uint8_t *mgmt_buf,
+                       size_t mgmt_size)
+{
+  ssize_t r = sendto(sss->mgmt_sock, mgmt_buf, mgmt_size, 0 /*flags*/,
+                     (struct sockaddr *)sender_sock, sizeof (struct sockaddr_in));
+
+  if (r <= 0) {
+    ++(sss->stats.errors);
+    traceEvent (TRACE_ERROR, "sendto_mgmt : sendto failed. %s", strerror (errno));
+    return -1;
+  }
+  return 0;
+}
 
 /** Examine a datagram and determine what to do with it.
  *
